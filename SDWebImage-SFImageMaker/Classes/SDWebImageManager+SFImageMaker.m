@@ -9,21 +9,53 @@
 
 
 @implementation SDWebImageManager (SFImageMaker)
-
-- (void)diskCacheForKey:(nonnull NSString *)key completed:(nullable void (^)(UIImage * _Nullable, NSError * _Nullable))completed {
-    if (![SDImageCache.sharedImageCache diskImageDataExistsWithKey:key]) {
-        completed(nil,[NSError errorWithDomain:@"SFWebImageMakerHelper" code:3 userInfo:@{NSLocalizedDescriptionKey:@"disk image cache is not exited"}]);
+- (SDWebImageCombinedOperation *)sf_loadImageWithURL:(NSURL *)url
+                                          options:(SDWebImageOptions)options
+                                          context:(SDWebImageContext *)context
+                                             flow:(SFImageFlow *)flow
+                                      flowOptions:(SFWebImageCacheSaveOption)flowOptions
+                                         progress:(SDImageLoaderProgressBlock)progressBlock
+                                        completed:(SDInternalCompletionBlock)completedBlock{
+    SFWebImageMakerHelper *helper = [[SFWebImageMakerHelper alloc] initWithUrl:url flow:flow];
+    helper.saveOption = flowOptions;
+    helper.delegate = self;
+    UIImage *memImage = [helper memeryImage];
+    if (memImage) {
+        NSData *data = memImage.sd_imageData;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            progressBlock(data.length, data.length, url);
+            completedBlock(memImage, data, nil, SDImageCacheTypeMemory, YES, url);
+        });
+        return nil;
     }
-    UIImage *image = [SDImageCache.sharedImageCache imageFromDiskCacheForKey:key];
-    completed(image,nil);
-}
-
-- (void)downloadForUrl:(nonnull NSURL *)url completed:(nonnull SFWebImageCompleteHandler)completed {
-    [SDWebImageManager.sharedManager loadImageWithURL:url options:0 progress:nil completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, SDImageCacheType cacheType, BOOL finished, NSURL * _Nullable imageURL) {
-        completed(image,imageURL,error);
+    UIImage *diskImage = [helper diskImage];
+    if (diskImage) {
+        NSData *data = diskImage.sd_imageData;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            progressBlock(data.length, data.length, url);
+            completedBlock(diskImage, data, nil, SDImageCacheTypeDisk, YES, url);
+        });
+        return nil;
+    }
+    return [self loadImageWithURL:url options:options context:context progress:progressBlock completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, SDImageCacheType cacheType, BOOL finished, NSURL * _Nullable imageURL) {
+        if (image && error == nil) {
+            image = [helper prcoessWithDownloadImage:image];
+            data = image.sd_imageData;
+        }
+        completedBlock(image,data,error,cacheType,finished,imageURL);
     }];
 }
-
+- (nullable SDWebImageCombinedOperation *)sf_loadImageWithURL:(nullable NSURL *)url
+                                                      options:(SDWebImageOptions)options
+                                                         flow:(SFImageFlow *)flow
+                                                  flowOptions:(SFWebImageCacheSaveOption)flowOptions
+                                                     progress:(nullable SDImageLoaderProgressBlock)progressBlock
+                                                    completed:(nonnull SDInternalCompletionBlock)completedBlock{
+    return [self sf_loadImageWithURL:url options:options context:nil flow:flow flowOptions:flowOptions progress:progressBlock completed:completedBlock];
+}
+- (UIImage *)diskCacheForKey:(NSString *)key{
+    return [SDImageCache.sharedImageCache imageFromDiskCacheForKey:key];
+}
 - (nonnull NSString *)keyForUrl:(nonnull NSURL *)url identifier:(nullable NSString *)identifier {
     return [NSString stringWithFormat:@"%@__%@",url.absoluteString,identifier];
 }

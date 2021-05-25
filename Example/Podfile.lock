@@ -1,17 +1,17 @@
 PODS:
-  - SDWebImage (5.6.1):
-    - SDWebImage/Core (= 5.6.1)
+  - SDWebImage (5.9.5):
+    - SDWebImage/Core (= 5.9.5)
   - SDWebImage-SFImageMaker (0.1.0):
     - SDWebImage (~> 5.0)
     - SFImageMaker
-  - SDWebImage/Core (5.6.1)
-  - SFImageMaker (1.0.2)
+  - SDWebImage/Core (5.9.5)
+  - SFImageMaker (1.1.1)
 
 DEPENDENCIES:
   - SDWebImage-SFImageMaker (from `../`)
 
 SPEC REPOS:
-  trunk:
+  https://github.com/CocoaPods/Specs.git:
     - SDWebImage
     - SFImageMaker
 
@@ -20,10 +20,10 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  SDWebImage: 7edb9c3ea661e77a66661f7f044de8c1b55d1120
+  SDWebImage: 0b2ba0d56479bf6a45ecddbfd5558bea93150d25
   SDWebImage-SFImageMaker: 8a1e6e561cf0daeb97c7ee04d8be4d033999f8d6
-  SFImageMaker: 2ed1797bcfd50261a5be2e08923d41e341ddc727
+  SFImageMaker: 403c44ebc2e39407efa4a57411d99a7440c44c75
 
-PODFILE CHECKSUM: 532d105e558479f3d1c137007a6e1caad32b3b48
+PODFILE CHECKSUM: 70436f545b77643a26dd7693246b30db02ded96e
 
-COCOAPODS: 1.8.4
+COCOAPODS: 1.10.1

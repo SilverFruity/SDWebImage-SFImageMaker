@@ -20,20 +20,29 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    NSURL *url = [NSURL URLWithString:@"https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1584298042188&di=3e45e9a224d77e74ddef8693db1e8c84&imgtype=0&src=http%3A%2F%2Fa4.att.hudong.com%2F21%2F09%2F01200000026352136359091694357.jpg"];
-    SFShadowImageMaker *shadow = [[SFShadowImageMaker alloc] init];
-    shadow.shadowColor = [UIColor blackColor];
-    shadow.shadowBlurRadius = 40;
-    shadow.position = UIShadowPostionAll;
-    shadow.shadowOffset = CGSizeZero;
-    
-    self.helper = [[SFWebImageMakerHelper alloc] initWithUrl:url processors:@[[SFBlockImageMaker resizeWithMaxValue:200],[SFBlockImageMaker circle],shadow]];
-    self.helper.delegate = [SDWebImageManager sharedManager];
-    self.helper.saveOption = SFWebImageCacheSaveOptionAll;
-    [self.helper prcoessWithCompleted:^(UIImage * _Nullable image, NSURL * _Nullable url, NSError * _Nullable error) {
-        self.imageView.image = image;
-    }];
-    
+    NSURL *url = [NSURL URLWithString:@"https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fpic4.zhimg.com%2F50%2Fv2-fde5891065510ef51e4c8dc19f6f3aff_hd.jpg&refer=http%3A%2F%2Fpic4.zhimg.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1624521350&t=8427bf918dda45516b3dbc7f4f527681"];
+    SFImageFlow *flow = SFImageFlow.flow.resizeWithMax(200).circle.shadow(UIColor.blackColor, CGSizeZero, 40);
+    NSTimeInterval start = [[NSDate date] timeIntervalSince1970];
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        [[SDWebImageManager sharedManager] sf_loadImageWithURL:url options:0 flow:flow flowOptions:SFWebImageCacheSaveOptionAll progress:^(NSInteger receivedSize, NSInteger expectedSize, NSURL * _Nullable targetURL) {
+            
+        } completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, SDImageCacheType cacheType, BOOL finished, NSURL * _Nullable imageURL) {
+            self.imageView.image = image;
+            NSTimeInterval end = [[NSDate date] timeIntervalSince1970];
+            NSLog(@"time1: %f", end - start);
+        }];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            NSTimeInterval start = [[NSDate date] timeIntervalSince1970];
+            [[SDWebImageManager sharedManager] sf_loadImageWithURL:url options:0 flow:flow flowOptions:SFWebImageCacheSaveOptionAll progress:^(NSInteger receivedSize, NSInteger expectedSize, NSURL * _Nullable targetURL) {
+                
+            } completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, SDImageCacheType cacheType, BOOL finished, NSURL * _Nullable imageURL) {
+                self.imageView.image = image;
+                NSTimeInterval end = [[NSDate date] timeIntervalSince1970];
+                NSLog(@"time2: %f", end - start);
+            }];
+        });
+    });
+    [[SDWebImageManager sharedManager].imageCache clearWithCacheType:SDImageCacheTypeAll completion:nil];
 }
 
 - (void)didReceiveMemoryWarning
